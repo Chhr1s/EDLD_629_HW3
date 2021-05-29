@@ -28,14 +28,13 @@ dat <-
 `Does the relation between students' coded sex and likelihood of repeating depend upon the mean SES at the school level?`
 
 ```{r}
-
-## Basically I’m asking if there is parameter variance. So that means modeling sex as a random effect (i.e., the relation depends on the specific school they’re enrolled in - another way of thinking about random slopes is as giant interactions).
-
 mod1 <- brm(
     data = dat, 
     formula = 
       repeated_grade_num ~ sex*msesc + (sex | schoolid),
-    family = bernoulli(link = 'logit')
+    family = bernoulli(link = 'logit'), 
+    cores = 4,
+    backend = "cmdstan"
     )
 ```
 
@@ -43,7 +42,7 @@ mod1 <- brm(
 summary(mod1)
 ```
 
-It appears that the relation between students' coded sex and likelihood of repeating does not depend upon the mean SES at the school level. We see this with the 95% credible intervalsof the interaction including 0.
+It appears that the relation between students' coded sex and likelihood of repeating does not depend upon the mean SES at the school level. We see this with the 95% credible intervals of the interaction including 0.
 
 ## The Rest
 
@@ -55,44 +54,8 @@ The likelihood of repeating a grade varies between schools with a standard devia
 
 Yes, girls were less likely to repeat a grade than boys, with an average log-odds difference of -0.46 (95% CIs = [-0.66, -0.25]), and a standard deviation of 0.36 ([0.04, 0.68]).
 
-3. Does the relation between students' coded sex and likelihood of repeating depend upon the school in which they are enrolled?
+**3. Does the relation between students' coded sex and likelihood of repeating depend upon the school in which they are enrolled?**
 
 Yes, the standard deviation in slope of sex was 0.36 ([0.04, 0.68]). 
 
-# Other Questions
-
-## RQ 1
-
-### Part 1
-
-```{r}
-mod1_ml <- glmer(
-    data = dat, 
-    formula = 
-      repeated_grade_num ~ sex*msesc + (sex | schoolid),
-    family = binomial(link = 'logit')
-    )
-```
-
-```{r}
-summary(mod1_ml)
-```
-
-### Part 2
-
-The average log-odds was significantly lower than 0 for boys at schools with average school SES, meaning such individuals were more likely to not repeat a grade than they were to repeat a grade. Girls had significantly lower log-odds of repeating a grade than boys, controlling for school SES. School SES did not influence log-odds of repeating a grade, nor was there a significant interaction between this term and sex, controlling for sex and school SES. In other words, the relationship between sex and log odds of repeating a grade did not depend on school SES. 
-
-Schools had standard deviation of 1.94 log-odds of repeating a grade. 
-
-### Part 3
-
-```{r}
-mod1_tidied <- 
-  broom.mixed::tidy(mod1_ml, effects = 'ran_pars', conf.int = T)
-```
-
-```{r}
-mod1_tidied %>% 
-  mutate(level = forcats::fct_reorder(level, estimate))
-```
 
